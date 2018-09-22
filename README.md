@@ -8,3 +8,4 @@ Branches and releases:
 
   - [1.10.0](https://github.com/ExodusMovement/docker-dogecoind/tree/1.10.0)
     - [1.10.0-001](https://github.com/ExodusMovement/docker-dogecoind/tree/1.10.0-001)
+    - [1.10.0-002](https://github.com/ExodusMovement/docker-dogecoind/tree/1.10.0-002)
