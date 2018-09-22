@@ -1,21 +1,24 @@
-FROM alpine:3.8 AS builder
+FROM ubuntu:16.04 AS builder
 
 ENV BUILD_TAG 1.10.0
 
-RUN apk add --no-cache \
-    autoconf \
-    automake \
-    build-base \
-    openssl-dev \
-    libevent-dev \
-    libtool \
-    linux-headers \
-    zeromq-dev
-
-RUN wget -O- https://dl.bintray.com/boostorg/release/1.65.0/source/boost_1_65_0.tar.gz | tar xz
-RUN cd /boost_1_65_0 \
-  && ./bootstrap.sh --with-libraries=chrono,filesystem,program_options,system,thread \
-  && ./b2 install link=shared -j$(nproc)
+RUN apt update
+RUN apt install -y --no-install-recommends \
+  autoconf \
+  automake \
+  build-essential \
+  ca-certificates \
+  libboost-chrono-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-system-dev \
+  libboost-thread-dev \
+  libczmq-dev \
+  libevent-dev \
+  libssl-dev \
+  libtool \
+  pkg-config \
+  wget
 
 RUN wget -O- https://github.com/dogecoin/dogecoin/archive/v$BUILD_TAG.tar.gz | tar xz && mv /dogecoin-$BUILD_TAG /dogecoin
 WORKDIR /dogecoin
@@ -35,18 +38,25 @@ RUN make -j$(nproc)
 RUN strip src/dogecoind src/dogecoin-cli
 
 
-FROM alpine:3.8
+FROM ubuntu:16.04
 
-RUN apk add --no-cache \
-  openssl \
-  libevent \
-  zeromq
+RUN apt update \
+  && apt install -y --no-install-recommends \
+    libboost-chrono1.58.0 \
+    libboost-filesystem1.58.0 \
+    libboost-program-options1.58.0 \
+    libboost-system1.58.0 \
+    libboost-thread1.58.0 \
+    libczmq-dev \
+    libevent-dev \
+    libssl-dev \
+  && apt clean \
+  && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /usr/local/lib/libboost_* /usr/local/lib/
 COPY --from=builder /dogecoin/src/dogecoind /dogecoin/src/dogecoin-cli /usr/local/bin/
 
-RUN addgroup -g 1000 dogecoind \
-  && adduser -u 1000 -G dogecoind -s /bin/sh -D dogecoind
+RUN groupadd --gid 1000 dogecoind \
+  && useradd --uid 1000 --gid dogecoind --shell /bin/bash --create-home dogecoind
 
 USER dogecoind
 
